@@ -1,0 +1,68 @@
+table Actuals
+	lineageTag: 1382d677-a8b3-449c-ad24-cac16a86ee7f
+
+	column Department
+		dataType: string
+		lineageTag: 0c05849f-00df-42ee-854f-2ca708b9133e
+		summarizeBy: none
+		sourceColumn: Department
+
+		annotation SummarizationSetBy = Automatic
+
+	column Account
+		dataType: string
+		lineageTag: 8710122b-cd0f-4b0f-97d6-86a92090ea3f
+		summarizeBy: none
+		sourceColumn: Account
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 41132657-096d-444a-b624-09ae9209c244
+		summarizeBy: none
+		sourceColumn: Month
+
+		variation Variation
+			isDefault
+			relationship: e755fc5f-cba0-46f9-b5ce-9ce124fa4dea
+			defaultHierarchy: LocalDateTable_568690d2-6bb8-4042-9910-c56ffbeaa6ef.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column FiscalYear
+		dataType: int64
+		formatString: 0
+		lineageTag: d57b0bd1-d3c9-4c60-9aa5-931778fdbb22
+		summarizeBy: sum
+		sourceColumn: FiscalYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column ActualAmount
+		dataType: int64
+		formatString: 0
+		lineageTag: bc930aa0-6d2e-4678-9801-9d4655d8bb1b
+		summarizeBy: sum
+		sourceColumn: ActualAmount
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Actuals = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents(Environment.GetEnvironmentVariable("USERPROFILE") & "\OneDrive\Documents\Shared Documents\Finance-DEV\Actuals\Actuals_DEV.xlsx"), null, true),
+				    Actuals_Sheet = Source{[Item="Actuals",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(Actuals_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Department", type text}, {"Account", type text}, {"Month", type date}, {"FiscalYear", Int64.Type}, {"ActualAmount", Int64.Type}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
