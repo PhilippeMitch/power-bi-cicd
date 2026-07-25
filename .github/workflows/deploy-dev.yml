@@ -35,6 +35,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Verify workspace ID / SP access
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          python scripts/verify_workspace.py --workspace-id "${{ secrets.FABRIC_WORKSPACE_ID }}"
+
       - name: Deploy to DEV workspace
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
