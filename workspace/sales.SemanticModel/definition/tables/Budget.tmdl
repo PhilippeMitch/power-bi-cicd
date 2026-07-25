@@ -1,0 +1,68 @@
+table Budget
+	lineageTag: 9315299a-a13d-443d-9f98-71484c266994
+
+	column Department
+		dataType: string
+		lineageTag: ed09b50a-7f0b-4f27-b7b0-70a95d5afce4
+		summarizeBy: none
+		sourceColumn: Department
+
+		annotation SummarizationSetBy = Automatic
+
+	column Account
+		dataType: string
+		lineageTag: ddbe6607-be45-42c3-9dcf-f8657d436868
+		summarizeBy: none
+		sourceColumn: Account
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 089af009-d5c8-4482-b15e-4130ce57eaca
+		summarizeBy: none
+		sourceColumn: Month
+
+		variation Variation
+			isDefault
+			relationship: eef66d39-187b-4d91-bdf8-521f0776571a
+			defaultHierarchy: LocalDateTable_bc48920e-4e46-4f34-af2e-039398c9cb8b.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column FiscalYear
+		dataType: int64
+		formatString: 0
+		lineageTag: 18988b74-acae-429c-befb-09da18b5f259
+		summarizeBy: sum
+		sourceColumn: FiscalYear
+
+		annotation SummarizationSetBy = Automatic
+
+	column BudgetAmount
+		dataType: int64
+		formatString: 0
+		lineageTag: 56e20338-d3c2-4b4a-8cd9-28b2492a6b5e
+		summarizeBy: sum
+		sourceColumn: BudgetAmount
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Budget = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents(Environment.GetEnvironmentVariable("USERPROFILE") & "\OneDrive\Documents\Shared Documents\Finance-DEV\Budget\Budget_DEV.xlsx"), null, true),
+				    Budget_Sheet = Source{[Item="Budget",Kind="Sheet"]}[Data],
+				    #"Promoted Headers" = Table.PromoteHeaders(Budget_Sheet, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Department", type text}, {"Account", type text}, {"Month", type date}, {"FiscalYear", Int64.Type}, {"BudgetAmount", Int64.Type}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

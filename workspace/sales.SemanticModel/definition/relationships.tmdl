@@ -1,0 +1,10 @@
+relationship e755fc5f-cba0-46f9-b5ce-9ce124fa4dea
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Actuals.Month
+	toColumn: LocalDateTable_568690d2-6bb8-4042-9910-c56ffbeaa6ef.Date
+
+relationship eef66d39-187b-4d91-bdf8-521f0776571a
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Budget.Month
+	toColumn: LocalDateTable_bc48920e-4e46-4f34-af2e-039398c9cb8b.Date
+

@@ -1,0 +1,42 @@
+# fabric-cicd parameter file.
+#
+# IMPORTANT: this file must be named exactly "parameter.yml" and live at
+# the ROOT of the folder passed as --repo-dir (i.e. right here, inside
+# "workspace/", alongside the exported Fabric items) - fabric-cicd looks
+# for it in that exact location automatically.
+#
+# Docs: https://microsoft.github.io/fabric-cicd/latest/how_to/parameterization/
+#
+# --- Two Excel files on OneDrive, one path per environment ---
+#
+# There's no SharePoint/OneDrive-for-Business tenant here, so the model
+# reads the workbooks straight off each developer's locally-synced
+# OneDrive folder via File.Contents - this only ever refreshes from
+# Power BI Desktop (whoever last refreshed + published owns the data),
+# NOT from a scheduled/service-side refresh in the Fabric workspace.
+#
+# Each table's M query (see definition/tables/Actuals.tmdl and
+# Budget.tmdl) builds the path as:
+#   Environment.GetEnvironmentVariable("USERPROFILE") & "\OneDrive\Documents\Shared Documents\Finance-DEV\Actuals\Actuals_DEV.xlsx"
+# so it resolves under whichever Windows user opens the file - only the
+# "Finance-DEV\...\Actuals_DEV.xlsx" portion needs to swap per
+# environment, which is what find_value below targets.
+
+find_replace:
+  # Excel file #1 (Budget.xlsx)
+  - find_value: 'Finance-DEV\Budget\Budget_DEV.xlsx'
+    replace_value:
+      DEV: 'Finance-DEV\Budget\Budget_DEV.xlsx'
+      VAL: 'Finance-VAL\Budget\Budget_VAL.xlsx'
+      PROD: 'Finance-PROD\Budget\Budget_PROD.xlsx'
+    item_type: "SemanticModel"
+    file_path: "*/definition/tables/Budget.tmdl"
+
+  # Excel file #2 (Actuals.xlsx)
+  - find_value: 'Finance-DEV\Actuals\Actuals_DEV.xlsx'
+    replace_value:
+      DEV: 'Finance-DEV\Actuals\Actuals_DEV.xlsx'
+      VAL: 'Finance-VAL\Actuals\Actuals_VAL.xlsx'
+      PROD: 'Finance-PROD\Actuals\Actuals_PROD.xlsx'
+    item_type: "SemanticModel"
+    file_path: "*/definition/tables/Actuals.tmdl"
