@@ -7,9 +7,11 @@ secrets, so the same script works for DEV, VAL and PROD.
 """
 
 import argparse
+import glob
 import os
 import sys
 
+import requests
 from azure.identity import ClientSecretCredential
 from fabric_cicd import FabricWorkspace, publish_all_items, unpublish_all_orphan_items
 
@@ -27,6 +29,54 @@ def get_credential() -> ClientSecretCredential:
         client_id=client_id,
         client_secret=client_secret,
     )
+
+
+def take_over_semantic_models(workspace_id: str, repo_dir: str, credential: ClientSecretCredential) -> None:
+    """Take ownership of any pre-existing semantic models before fabric-cicd binds connections.
+
+    fabric-cicd's semantic_model_binding step calls the Fabric bindConnection API, which
+    only succeeds if the caller *owns* the semantic model (microsoft/fabric-cicd#824, open
+    as of 2026-08 - fabric-cicd does not take ownership itself). A model first published by
+    a human (e.g. via Fabric Git sync) keeps that human as owner even after this service
+    principal republishes its content, so binding fails with "you are not the owner". This
+    call is idempotent, so running it on every deploy is safe.
+    """
+    model_names = {
+        os.path.basename(path)[: -len(".SemanticModel")]
+        for path in glob.glob(os.path.join(repo_dir, "*.SemanticModel"))
+    }
+    if not model_names:
+        return
+
+    fabric_token = credential.get_token("https://api.fabric.microsoft.com/.default").token
+    list_resp = requests.get(
+        f"https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/semanticModels",
+        headers={"Authorization": f"Bearer {fabric_token}"},
+        timeout=30,
+    )
+    list_resp.raise_for_status()
+    models_by_name = {model["displayName"]: model["id"] for model in list_resp.json().get("value", [])}
+
+    powerbi_token = credential.get_token("https://analysis.windows.net/powerbi/api/.default").token
+    for name in sorted(model_names):
+        model_id = models_by_name.get(name)
+        if not model_id:
+            # Doesn't exist in the workspace yet - fabric-cicd will create it and this
+            # service principal will own it automatically, so no takeover is needed.
+            continue
+
+        takeover_resp = requests.post(
+            f"https://api.powerbi.com/v1.0/myorg/groups/{workspace_id}/datasets/{model_id}/Default.TakeOver",
+            headers={"Authorization": f"Bearer {powerbi_token}"},
+            timeout=30,
+        )
+        if takeover_resp.ok:
+            print(f"Took ownership of semantic model '{name}' ({model_id})")
+        else:
+            print(
+                f"::warning::Failed to take ownership of semantic model '{name}': "
+                f"{takeover_resp.status_code} {takeover_resp.text[:200]}"
+            )
 
 
 def parse_args() -> argparse.Namespace:
@@ -68,6 +118,8 @@ def main() -> None:
         environment=args.environment,
         token_credential=credential,
     )
+
+    take_over_semantic_models(args.workspace_id, args.repo_dir, credential)
 
     print(f"Publishing items from '{args.repo_dir}' to workspace {args.workspace_id} ({args.environment})")
     publish_all_items(target_workspace)
