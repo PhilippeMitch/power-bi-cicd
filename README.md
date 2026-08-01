@@ -316,6 +316,29 @@ database's credentials are rotated, update them **on the Connection
 itself** (not in this repo) — the binding doesn't need to change unless
 the Connection ID or the server/database changes.
 
+**Two prerequisites `bindConnection` silently depends on:**
+
+- **The Connection must be shared with the service principal.** Open
+  the Connection (Admin portal → Manage connections and gateways) →
+  **Manage users** → add the SP (search by app name, or by its
+  Application/client ID GUID if the name doesn't resolve) with **User**
+  access. Without this, `bindConnection` fails with a 403 that
+  fabric-cicd only logs as a `warning`, not a hard error — the deploy
+  still reports success.
+- **The service principal must own the semantic model.** Fabric's
+  `bindConnection` API requires the caller to be the model's owner. A
+  model first published by a human (e.g. via Fabric Git sync) keeps
+  that human as owner even after the SP republishes its content, so
+  binding fails with *"you cannot configure the data connection
+  bindings because you are not the owner"*. This is a known,
+  still-open gap in fabric-cicd itself
+  ([microsoft/fabric-cicd#824](https://github.com/microsoft/fabric-cicd/issues/824))
+  — it never takes ownership before binding. `scripts/deploy.py`
+  works around it: before calling `publish_all_items`, it takes
+  ownership (via the classic Power BI `Default.TakeOver` API) of every
+  semantic model in `--repo-dir` that already exists in the target
+  workspace. This runs on every deploy and is idempotent.
+
 Locally, Power BI Desktop still prompts for the same SQL Login the
 first time you open/refresh the `.pbip` against a given database —
 that's independent of the Fabric Connection described here.
