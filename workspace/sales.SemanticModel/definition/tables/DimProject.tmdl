@@ -1,0 +1,24 @@
+table DimProject
+	lineageTag: f55d67d2-622a-46ee-ae5d-c9b7007eb6ae
+
+	column Project
+		lineageTag: 2739c664-ab39-4fd7-a060-32adc11aefc6
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Project]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimProject = calculated
+		mode: import
+		source =
+				
+				DISTINCT(
+				    UNION(
+				        SELECTCOLUMNS(Budget, "Project", Budget[Project]),
+				        SELECTCOLUMNS(Actuals, "Project", Actuals[Project])
+				    )
+				)
+
+	annotation PBI_Id = 35c7de541d38408a9610cec7b981bb2e
+

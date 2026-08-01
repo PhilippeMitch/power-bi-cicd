@@ -1,0 +1,24 @@
+table DimCategory
+	lineageTag: ecc3b4eb-0aff-4a8f-8229-f16a5d8ab98f
+
+	column Category
+		lineageTag: cf83f87c-8ac3-4582-aa7a-c7fe76e7c4ce
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Category]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimCategory = calculated
+		mode: import
+		source =
+				
+				DISTINCT(
+				    UNION(
+				        SELECTCOLUMNS(Budget, "Category", Budget[Category]),
+				        SELECTCOLUMNS(Actuals, "Category", Actuals[Category])
+				    )
+				)
+
+	annotation PBI_Id = d071c7a69ae74bc7a5c0b02b239d5e63
+

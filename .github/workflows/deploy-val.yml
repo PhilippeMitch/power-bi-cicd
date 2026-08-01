@@ -1,0 +1,59 @@
+name: Deploy to VAL
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - val
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-val
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish Fabric items to VAL workspace
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       startsWith(github.event.pull_request.head.ref, 'release/'))
+    # "environment: val" is what makes GitHub pause this job and wait for
+    # an approval from the reviewers configured on the "val" Environment
+    # (Settings > Environments > val > Required reviewers).
+    environment:
+      name: val
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref || 'val' }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify workspace ID / SP access
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          python scripts/verify_workspace.py --workspace-id "${{ secrets.FABRIC_WORKSPACE_ID }}"
+
+      - name: Deploy to VAL workspace
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          python scripts/deploy.py \
+            --workspace-id "${{ secrets.FABRIC_WORKSPACE_ID }}" \
+            --environment VAL \
+            --repo-dir "workspace" \
+            --unpublish-orphans

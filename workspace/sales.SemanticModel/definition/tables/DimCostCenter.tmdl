@@ -1,0 +1,24 @@
+table DimCostCenter
+	lineageTag: 01570679-f20c-4e64-8878-88b2433bdf70
+
+	column 'Cost Center'
+		lineageTag: 6da1ef3f-de0d-4d7f-9b88-632c8598da1f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Cost Center]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimCostCenter = calculated
+		mode: import
+		source =
+				
+				DISTINCT(
+				    UNION(
+				        SELECTCOLUMNS(Budget, "Cost Center", Budget[CostCenter]),
+				        SELECTCOLUMNS(Actuals, "Cost Center", Actuals[CostCenter])
+				    )
+				)
+
+	annotation PBI_Id = 0f2e4bf666994b7e996234625cbb3d2b
+
