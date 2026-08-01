@@ -222,43 +222,103 @@ python scripts/deploy.py \
 
 ---
 
-## 6. Pointing each environment at the right OneDrive Excel files
+## 6. Pointing each environment at the right Azure SQL database
 
-Two Excel workbooks feed the semantic model(s) — `Actuals_<ENV>.xlsx`
-and `Budget_<ENV>.xlsx` — each synced locally via OneDrive under
-`OneDrive\Documents\Shared Documents\Finance-<ENV>\...`. There's no
-SharePoint/OneDrive-for-Business tenant here, so each table's Power
-Query step reads the file straight off disk with `File.Contents`,
-built from the current Windows user's profile so it resolves on any
-dev's machine:
+Both tables (`Budget` and `Actuals`) read from an **Azure SQL Database**
+via `Sql.Databases(...)`, authored locally in Power BI Desktop using its
+native SQL Server connector with **SQL Login** (username/password)
+authentication. Because this is a cloud-hosted Azure SQL Database (not
+an on-prem SQL Server), **no gateway is required** — the Fabric service
+connects directly, the same way Power BI Desktop does.
+
+The three environments share the **same logical server**
+(`sales-pbi-db.database.windows.net`) but each has its **own database**
+— only the database name differs per environment.
+
+### 6.1 M query, and what `parameter.yml` swaps
+
+Each table's Power Query step (see
+`workspace/sales.SemanticModel/definition/tables/Actuals.tmdl` and
+`Budget.tmdl`) uses:
 
 ```
-Environment.GetEnvironmentVariable("USERPROFILE") & "\OneDrive\Documents\Shared Documents\Finance-DEV\Actuals\Actuals_DEV.xlsx"
+let
+    Source = Sql.Databases("sales-pbi-db.database.windows.net"),
+    #"free-sql-db-5932339" = Source{[Name="free-sql-db-5932339"]}[Data],
+    dbo_Budget = #"free-sql-db-5932339"{[Schema="dbo",Item="Budget"]}[Data]
+in
+    dbo_Budget
 ```
 
-(see `workspace/sales.SemanticModel/definition/tables/Actuals.tmdl` and
-`Budget.tmdl`). Only the `Finance-<ENV>\...\<file>_<ENV>.xlsx` portion
-differs per environment, and that's exactly what `workspace/parameter.yml`
-swaps via `find_replace` — one entry per workbook, targeting the
-matching table's `.tmdl` file directly (`find_value` must match the DEV
-string in that file **character for character**, or the swap silently
-won't apply).
+The database name `free-sql-db-5932339` appears twice — once as the
+step name, once as the `Name=` literal — and `workspace/parameter.yml`
+swaps both occurrences together with a single `find_replace` entry per
+table (`find_value` must match the DEV string **character for
+character**, or the swap silently won't apply). VAL/PROD currently hold
+placeholder database names (`free-sql-db-VAL` / `free-sql-db-PROD`) —
+update those in `parameter.yml` once the real VAL/PROD databases exist.
 
 This file **must** be named `parameter.yml` and live at the root of
 `workspace/` (the folder passed as `--repo-dir`) — `fabric-cicd` looks
 for it there automatically, no extra flag needed in `scripts/deploy.py`.
 
-**Important limitation:** because the query reads a local file path,
-this semantic model can only be refreshed from **Power BI Desktop**
-(whoever refreshes + publishes last "owns" the data for that
-environment) — the Fabric/Power BI **service** cannot reach a path
-under `C:\Users\...`, so scheduled/service-side refresh will not work
-for VAL/PROD after deployment. If that's ever needed, the data source
-would have to move to somewhere the service can reach over HTTPS (a
-real SharePoint/OneDrive-for-Business site via `Web.Contents` /
-`SharePoint.Files`, a Fabric Lakehouse, etc.) — see the
-[fabric-cicd parameterization docs](https://microsoft.github.io/fabric-cicd/latest/how_to/parameterization/)
-for that pattern.
+### 6.2 SQL Login credentials via centrally-managed Fabric Connections
+
+SQL Login credentials are **never** committed to source control — they
+aren't part of `parameter.yml`, the `.tmdl` files, or anywhere else in
+`workspace/`. Instead of setting per-workspace data source credentials
+by hand, this repo uses a **Fabric Connection** per environment (a
+reusable, centrally-managed resource that holds the SQL Login) and
+binds the semantic model to it automatically on every deploy via the
+`semantic_model_binding` block in `parameter.yml`.
+
+**One-time setup, per environment (DEV/VAL/PROD):**
+
+1. Go to the [Fabric/Power BI admin portal](https://app.powerbi.com) →
+   **Manage connections and gateways** → **New** → **Cloud connection**.
+2. Connection type: **SQL Server** (or **Azure SQL Database**). Server:
+   `sales-pbi-db.database.windows.net`. Database: that environment's
+   database name (the same value used as the `VAL`/`PROD`
+   `replace_value` in `parameter.yml`'s `find_replace` section above).
+3. Authentication method: **Basic** (SQL Login) — enter the SQL Login
+   username/password for that environment's database.
+4. Under **Who can use this connection**, share it with (at least) the
+   service principal used by the CD pipeline (see section 2.1) so
+   `fabric-cicd` is allowed to bind the semantic model to it.
+5. Get that connection's **ID** (a GUID) — the "Manage connections and
+   gateways" list view doesn't display it and doesn't change the URL
+   when you click a row, so use one of:
+   - **Browser DevTools**: with the connections list page open, press
+     `F12` → **Network** tab → filter **Fetch/XHR** → reload the page.
+     Find the request that returns the connections list as JSON, open
+     its **Response**/**Preview**, and read the `id` (or `objectId`)
+     next to the matching connection name.
+   - **REST API** (scriptable, most reliable): call
+     [List Connections](https://learn.microsoft.com/en-us/rest/api/fabric/core/connections/list-connections):
+     ```powershell
+     $token = az account get-access-token --resource https://api.fabric.microsoft.com --query accessToken -o tsv
+     Invoke-RestMethod -Uri "https://api.fabric.microsoft.com/v1/connections" -Headers @{ Authorization = "Bearer $token" }
+     ```
+     (requires `az login` first, with the same account shown as the
+     connection's owner in the portal — e.g. "Jean" in the list view).
+     The response's `value[]` array has one object per connection with
+     its `displayName` and `id` — match on `displayName` (e.g.
+     `sales-pbi-db-connections`, `free-sql-db-val-connections`,
+     `sales-pbi-db-prod-connections`) and copy the corresponding `id`.
+6. Paste that GUID into `workspace/parameter.yml`, under
+   `semantic_model_binding.models[].connection_id`, for the matching
+   environment key (`DEV`/`VAL`/`PROD`).
+
+Once all three GUIDs are real (not the `00000000-...` placeholders),
+every deploy calls `bindConnection` for the target environment, so the
+model is fully authenticated with no manual per-workspace step. If a
+database's credentials are rotated, update them **on the Connection
+itself** (not in this repo) — the binding doesn't need to change unless
+the Connection ID or the server/database changes.
+
+Locally, Power BI Desktop still prompts for the same SQL Login the
+first time you open/refresh the `.pbip` against a given database —
+that's independent of the Fabric Connection described here.
 
 ---
 
@@ -273,6 +333,6 @@ for that pattern.
 - See the [fabric-cicd parameterization docs](https://microsoft.github.io/fabric-cicd/latest/how_to/parameterization/)
   for additional capabilities beyond `find_replace` (e.g.
   `key_value_replace` for JSON/YAML keys, `spark_pool` mappings, and
-  `semantic_model_binding` if you later manage SharePoint credentials via
-  centrally-defined Fabric "Connections" instead of per-workspace
-  dataset credential consent).
+  `semantic_model_binding` if you later manage the Azure SQL connection
+  via a centrally-defined Fabric "Connection" instead of per-workspace
+  data source credentials).

@@ -1,66 +1,73 @@
 table Actuals
-	lineageTag: 1382d677-a8b3-449c-ad24-cac16a86ee7f
-
-	column Department
-		dataType: string
-		lineageTag: 0c05849f-00df-42ee-854f-2ca708b9133e
-		summarizeBy: none
-		sourceColumn: Department
-
-		annotation SummarizationSetBy = Automatic
-
-	column Account
-		dataType: string
-		lineageTag: 8710122b-cd0f-4b0f-97d6-86a92090ea3f
-		summarizeBy: none
-		sourceColumn: Account
-
-		annotation SummarizationSetBy = Automatic
+	lineageTag: 05059ca3-63be-4309-8373-3b2922a296ca
 
 	column Month
 		dataType: dateTime
 		formatString: Long Date
-		lineageTag: 41132657-096d-444a-b624-09ae9209c244
+		lineageTag: da8ef40e-dcca-495a-a991-8e54d750e07b
 		summarizeBy: none
 		sourceColumn: Month
 
 		variation Variation
 			isDefault
-			relationship: e755fc5f-cba0-46f9-b5ce-9ce124fa4dea
-			defaultHierarchy: LocalDateTable_568690d2-6bb8-4042-9910-c56ffbeaa6ef.'Date Hierarchy'
+			relationship: 9d324128-6950-43f5-a8a7-60390a6f8b32
+			defaultHierarchy: LocalDateTable_1bc9d289-57f5-4ced-aa5f-b2349cfaf1ed.'Date Hierarchy'
 
 		annotation SummarizationSetBy = Automatic
 
 		annotation UnderlyingDateTimeDataType = Date
 
-	column FiscalYear
-		dataType: int64
-		formatString: 0
-		lineageTag: d57b0bd1-d3c9-4c60-9aa5-931778fdbb22
-		summarizeBy: sum
-		sourceColumn: FiscalYear
+	column Department
+		dataType: string
+		lineageTag: 4ddc531b-eec5-4d95-9440-3984c7e1a9a2
+		summarizeBy: none
+		sourceColumn: Department
 
 		annotation SummarizationSetBy = Automatic
 
-	column ActualAmount
-		dataType: int64
-		formatString: 0
-		lineageTag: bc930aa0-6d2e-4678-9801-9d4655d8bb1b
-		summarizeBy: sum
-		sourceColumn: ActualAmount
+	column CostCenter
+		dataType: string
+		lineageTag: 140402c1-7719-4e6e-8965-702c5b6fdd95
+		summarizeBy: none
+		sourceColumn: CostCenter
 
 		annotation SummarizationSetBy = Automatic
+
+	column Project
+		dataType: string
+		lineageTag: 18fc5dc5-c99a-47b4-b0f8-2e63da79cad0
+		summarizeBy: none
+		sourceColumn: Project
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		lineageTag: 902a2ff2-9d2a-4f8b-b9ab-0f5e03bc954e
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column Amount_USD
+		dataType: double
+		lineageTag: 61008e9c-9a62-4073-a4c8-30d08054f4c7
+		summarizeBy: sum
+		sourceColumn: Amount_USD
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	partition Actuals = m
 		mode: import
 		source =
 				let
-				    Source = Excel.Workbook(File.Contents(Environment.GetEnvironmentVariable("USERPROFILE") & "\OneDrive\Documents\Shared Documents\Finance-DEV\Actuals\Actuals_DEV.xlsx"), null, true),
-				    Actuals_Sheet = Source{[Item="Actuals",Kind="Sheet"]}[Data],
-				    #"Promoted Headers" = Table.PromoteHeaders(Actuals_Sheet, [PromoteAllScalars=true]),
-				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Department", type text}, {"Account", type text}, {"Month", type date}, {"FiscalYear", Int64.Type}, {"ActualAmount", Int64.Type}})
+				    Source = Sql.Databases("sales-pbi-db.database.windows.net"),
+				    #"free-sql-db-5932339" = Source{[Name="free-sql-db-5932339"]}[Data],
+				    dbo_Actuals = #"free-sql-db-5932339"{[Schema="dbo",Item="Actuals"]}[Data]
 				in
-				    #"Changed Type"
+				    dbo_Actuals
 
 	annotation PBI_NavigationStepName = Navigation
 

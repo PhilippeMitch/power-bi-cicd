@@ -7,36 +7,65 @@
 #
 # Docs: https://microsoft.github.io/fabric-cicd/latest/how_to/parameterization/
 #
-# --- Two Excel files on OneDrive, one path per environment ---
+# --- Azure SQL Database, same logical server, separate database per environment ---
 #
-# There's no SharePoint/OneDrive-for-Business tenant here, so the model
-# reads the workbooks straight off each developer's locally-synced
-# OneDrive folder via File.Contents - this only ever refreshes from
-# Power BI Desktop (whoever last refreshed + published owns the data),
-# NOT from a scheduled/service-side refresh in the Fabric workspace.
+# Both tables connect via Sql.Databases() using SQL Login (username/
+# password), authored locally in Power BI Desktop with that native SQL
+# Server connector. The logical server name is the same across DEV/VAL/
+# PROD ("sales-pbi-db.database.windows.net") - only the *database name*
+# differs per environment, which is what find_value below targets.
 #
 # Each table's M query (see definition/tables/Actuals.tmdl and
-# Budget.tmdl) builds the path as:
-#   Environment.GetEnvironmentVariable("USERPROFILE") & "\OneDrive\Documents\Shared Documents\Finance-DEV\Actuals\Actuals_DEV.xlsx"
-# so it resolves under whichever Windows user opens the file - only the
-# "Finance-DEV\...\Actuals_DEV.xlsx" portion needs to swap per
-# environment, which is what find_value below targets.
+# Budget.tmdl) hardcodes:
+#   Source = Sql.Databases("sales-pbi-db.database.windows.net"),
+#   #"free-sql-db-5932339" = Source{[Name="free-sql-db-5932339"]}[Data],
+# The database name "free-sql-db-5932339" appears twice (once as the
+# step name, once as the Name= literal) - find_replace does a raw text
+# swap across the whole file, so a single find_value/replace_value pair
+# updates both occurrences together.
+#
+# NOTE: SQL Login credentials are NOT part of this file (or any file in
+# this repo) - they must never be committed. Instead, credentials live
+# on a centrally-managed Fabric "Connection" (one per environment, see
+# README section 6.2) that is bound to this semantic model via the
+# semantic_model_binding block below - fabric-cicd calls bindConnection
+# on every deploy, so no manual per-workspace credential step is needed.
+#
+# TODO: the connection_id GUIDs below are placeholders - replace them
+# with the real Connection IDs from Fabric (Manage connections and
+# gateways -> pick the connection -> read its "id" field via the
+# devtools/API method in README section 6.2), matching each connection's
+# datasourceName to its environment:
+#   sales-pbi-db-connections      -> DEV  (database free-sql-db-5932339)
+#   free-sql-db-val-connections   -> VAL  (database free-sql-db-val)
+#   sales-pbi-db-prod-connections -> PROD (database sales-pbi-db-prod)
 
 find_replace:
-  # Excel file #1 (Budget.xlsx)
-  - find_value: 'Finance-DEV\Budget\Budget_DEV.xlsx'
+  # Azure SQL Database - Budget table
+  - find_value: 'free-sql-db-5932339'
     replace_value:
-      DEV: 'Finance-DEV\Budget\Budget_DEV.xlsx'
-      VAL: 'Finance-VAL\Budget\Budget_VAL.xlsx'
-      PROD: 'Finance-PROD\Budget\Budget_PROD.xlsx'
+      DEV: 'free-sql-db-5932339'
+      VAL: 'free-sql-db-val'
+      PROD: 'sales-pbi-db-prod'
     item_type: "SemanticModel"
     file_path: "*/definition/tables/Budget.tmdl"
 
-  # Excel file #2 (Actuals.xlsx)
-  - find_value: 'Finance-DEV\Actuals\Actuals_DEV.xlsx'
+  # Azure SQL Database - Actuals table
+  - find_value: 'free-sql-db-5932339'
     replace_value:
-      DEV: 'Finance-DEV\Actuals\Actuals_DEV.xlsx'
-      VAL: 'Finance-VAL\Actuals\Actuals_VAL.xlsx'
-      PROD: 'Finance-PROD\Actuals\Actuals_PROD.xlsx'
+      DEV: 'free-sql-db-5932339'
+      VAL: 'free-sql-db-val'
+      PROD: 'sales-pbi-db-prod'
     item_type: "SemanticModel"
     file_path: "*/definition/tables/Actuals.tmdl"
+
+# Binds the "sales" semantic model to the correct pre-created Fabric
+# Connection (holding the SQL Login) per environment, so both tables'
+# data sources are authenticated without any manual credential step.
+semantic_model_binding:
+  models:
+    - semantic_model_name: "sales"
+      connection_id:
+        DEV: "f087829a-a56a-476c-bfdf-abed813b9155"
+        VAL: "b4bf074a-b234-406d-94a5-28bb0559bd54"
+        PROD: "4465225d-1beb-4e1a-9dae-5a33cc9be62e"
