@@ -1,0 +1,59 @@
+table DimMonth
+	lineageTag: bed273ca-32b1-426f-b30c-079c10854900
+
+	column YearMonth
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 91824ccf-7ec8-40fb-9ba8-17e8f664238d
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [YearMonth]
+
+		variation Variation
+			isDefault
+			relationship: 724b1e4e-9bd8-4eff-b10a-d0d3c4d4da58
+			defaultHierarchy: LocalDateTable_64daa692-264f-4be5-8049-fbe3e5cbb388.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Month Name' = FORMAT(DimMonth[YearMonth], "MMM")
+		lineageTag: 4560fb7f-277c-4046-9af9-e26673bbd906
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Number' = MONTH(DimMonth[YearMonth])
+		formatString: 0
+		lineageTag: b15bd8e6-dd14-44cd-b0b2-5453f0f24821
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year = YEAR(DimMonth[YearMonth])
+		formatString: 0
+		lineageTag: 918b2a06-d05f-457e-b3cb-3686455479d5
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimMonth = calculated
+		mode: import
+		source =
+				
+				DISTINCT(
+				    UNION(
+				        SELECTCOLUMNS(
+				            Actuals,
+				            "YearMonth", Actuals[Month]
+				        ),
+				        SELECTCOLUMNS(
+				            Budget,
+				            "YearMonth", Budget[Month]
+				        )
+				    )
+				)
+
+	annotation PBI_Id = 1bf6bc2fa0034378b66c99a6984b51a3
+

@@ -8,11 +8,6 @@ table Actuals
 		summarizeBy: none
 		sourceColumn: Month
 
-		variation Variation
-			isDefault
-			relationship: 9d324128-6950-43f5-a8a7-60390a6f8b32
-			defaultHierarchy: LocalDateTable_1bc9d289-57f5-4ced-aa5f-b2349cfaf1ed.'Date Hierarchy'
-
 		annotation SummarizationSetBy = Automatic
 
 		annotation UnderlyingDateTimeDataType = Date

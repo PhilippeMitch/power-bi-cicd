@@ -14,10 +14,15 @@ annotation PBI_QueryOrder = ["Actuals","Budget"]
 annotation PBI_ProTooling = ["DevMode"]
 
 ref table Actuals
-ref table DateTableTemplate_64082bb2-04b9-4df4-a93c-6fe3cba9b246
-ref table LocalDateTable_1bc9d289-57f5-4ced-aa5f-b2349cfaf1ed
 ref table Budget
-ref table LocalDateTable_7d533e57-d5ab-4075-82ab-218180ee70ef
+ref table _Measures
+ref table DimCategory
+ref table DimCostCenter
+ref table DimDepartment
+ref table DimMonth
+ref table DimProject
+ref table DateTableTemplate_9b9d7fde-6768-4470-85cb-1fcea8281c8f
+ref table LocalDateTable_64daa692-264f-4be5-8049-fbe3e5cbb388
 
 ref cultureInfo en-US
 

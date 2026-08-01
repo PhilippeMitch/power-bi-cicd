@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "110ff9ec30d08190a4b9",
+  "position": {
+    "x": 15.683728236680192,
+    "y": 478.95693153554129,
+    "z": 6,
+    "height": 241.2881267181568,
+    "width": 618.90404503207219,
+    "tabOrder": 6
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DimMonth"
+                    }
+                  },
+                  "Property": "YearMonth"
+                }
+              },
+              "queryRef": "DimMonth.YearMonth.Variation.Date Hierarchy.Year",
+              "nativeQueryRef": "YearMonth Year",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Variance$"
+                }
+              },
+              "queryRef": "_Measures.Variance$",
+              "nativeQueryRef": "Variance$"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}
