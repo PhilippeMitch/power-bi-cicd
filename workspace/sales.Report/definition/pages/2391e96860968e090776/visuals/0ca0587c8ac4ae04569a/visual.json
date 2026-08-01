@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "0ca0587c8ac4ae04569a",
+  "position": {
+    "x": 644.23929833747866,
+    "y": 478.95693153554129,
+    "z": 7,
+    "height": 241.2881267181568,
+    "width": 620.110485665663,
+    "tabOrder": 7
+  },
+  "visual": {
+    "visualType": "treemap",
+    "query": {
+      "queryState": {
+        "Group": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Actuals"
+                    }
+                  },
+                  "Property": "Project"
+                }
+              },
+              "queryRef": "Actuals.Project",
+              "nativeQueryRef": "Project",
+              "active": true
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "TotalActual"
+                }
+              },
+              "queryRef": "_Measures.TotalActual",
+              "nativeQueryRef": "TotalActual"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

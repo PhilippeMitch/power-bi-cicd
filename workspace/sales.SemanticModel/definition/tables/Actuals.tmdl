@@ -1,0 +1,70 @@
+table Actuals
+	lineageTag: 05059ca3-63be-4309-8373-3b2922a296ca
+
+	column Month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: da8ef40e-dcca-495a-a991-8e54d750e07b
+		summarizeBy: none
+		sourceColumn: Month
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Department
+		dataType: string
+		lineageTag: 4ddc531b-eec5-4d95-9440-3984c7e1a9a2
+		summarizeBy: none
+		sourceColumn: Department
+
+		annotation SummarizationSetBy = Automatic
+
+	column CostCenter
+		dataType: string
+		lineageTag: 140402c1-7719-4e6e-8965-702c5b6fdd95
+		summarizeBy: none
+		sourceColumn: CostCenter
+
+		annotation SummarizationSetBy = Automatic
+
+	column Project
+		dataType: string
+		lineageTag: 18fc5dc5-c99a-47b4-b0f8-2e63da79cad0
+		summarizeBy: none
+		sourceColumn: Project
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		lineageTag: 902a2ff2-9d2a-4f8b-b9ab-0f5e03bc954e
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column Amount_USD
+		dataType: double
+		lineageTag: 61008e9c-9a62-4073-a4c8-30d08054f4c7
+		summarizeBy: sum
+		sourceColumn: Amount_USD
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Actuals = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Databases("sales-pbi-db.database.windows.net"),
+				    #"free-sql-db-5932339" = Source{[Name="free-sql-db-5932339"]}[Data],
+				    dbo_Actuals = #"free-sql-db-5932339"{[Schema="dbo",Item="Actuals"]}[Data]
+				in
+				    dbo_Actuals
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

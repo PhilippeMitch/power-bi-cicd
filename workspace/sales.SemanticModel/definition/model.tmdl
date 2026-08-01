@@ -1,0 +1,28 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["Actuals","Budget"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table Actuals
+ref table Budget
+ref table _Measures
+ref table DimCategory
+ref table DimCostCenter
+ref table DimDepartment
+ref table DimMonth
+ref table DimProject
+ref table DateTableTemplate_9b9d7fde-6768-4470-85cb-1fcea8281c8f
+ref table LocalDateTable_64daa692-264f-4be5-8049-fbe3e5cbb388
+
+ref cultureInfo en-US
+

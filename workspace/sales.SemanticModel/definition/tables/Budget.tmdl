@@ -1,0 +1,70 @@
+table Budget
+	lineageTag: ffd858f5-223f-487e-be70-89876610ea86
+
+	column Month
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 09f97c3f-c666-41dd-8b8f-36e876761bb4
+		summarizeBy: none
+		sourceColumn: Month
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Department
+		dataType: string
+		lineageTag: b35935a7-d1d3-4cf2-8070-564c201c9bc3
+		summarizeBy: none
+		sourceColumn: Department
+
+		annotation SummarizationSetBy = Automatic
+
+	column CostCenter
+		dataType: string
+		lineageTag: 0234c9a7-2fec-4194-b20c-adf7a0f3e3b4
+		summarizeBy: none
+		sourceColumn: CostCenter
+
+		annotation SummarizationSetBy = Automatic
+
+	column Project
+		dataType: string
+		lineageTag: cfc5b7ec-a03c-42cc-8a0a-6dfd43fa9fda
+		summarizeBy: none
+		sourceColumn: Project
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		lineageTag: 10f67b14-5658-4174-9d16-d9b61d0850a4
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column Amount_USD
+		dataType: double
+		lineageTag: 79b61b34-f47d-4624-b0ac-84f30341079b
+		summarizeBy: sum
+		sourceColumn: Amount_USD
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Budget = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Databases("sales-pbi-db.database.windows.net"),
+				    #"free-sql-db-5932339" = Source{[Name="free-sql-db-5932339"]}[Data],
+				    dbo_Budget = #"free-sql-db-5932339"{[Schema="dbo",Item="Budget"]}[Data]
+				in
+				    dbo_Budget
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+
