@@ -4,4 +4,5 @@ __pycache__/
 venv/
 .env
 
-workspace/sales.Report/.pbi/localSettings.json
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
