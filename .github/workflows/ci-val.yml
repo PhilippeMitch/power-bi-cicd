@@ -41,3 +41,8 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Secret Scanning Review Action
+        uses: advanced-security-actions/secret-scanning-review-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCAN_GITHUB_TOKEN }}

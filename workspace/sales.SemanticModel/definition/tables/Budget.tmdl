@@ -1,66 +1,73 @@
 table Budget
-	lineageTag: 9315299a-a13d-443d-9f98-71484c266994
-
-	column Department
-		dataType: string
-		lineageTag: ed09b50a-7f0b-4f27-b7b0-70a95d5afce4
-		summarizeBy: none
-		sourceColumn: Department
-
-		annotation SummarizationSetBy = Automatic
-
-	column Account
-		dataType: string
-		lineageTag: ddbe6607-be45-42c3-9dcf-f8657d436868
-		summarizeBy: none
-		sourceColumn: Account
-
-		annotation SummarizationSetBy = Automatic
+	lineageTag: ffd858f5-223f-487e-be70-89876610ea86
 
 	column Month
 		dataType: dateTime
 		formatString: Long Date
-		lineageTag: 089af009-d5c8-4482-b15e-4130ce57eaca
+		lineageTag: 09f97c3f-c666-41dd-8b8f-36e876761bb4
 		summarizeBy: none
 		sourceColumn: Month
 
 		variation Variation
 			isDefault
-			relationship: eef66d39-187b-4d91-bdf8-521f0776571a
-			defaultHierarchy: LocalDateTable_bc48920e-4e46-4f34-af2e-039398c9cb8b.'Date Hierarchy'
+			relationship: 6a454c35-1e1d-497a-9060-4592bd97415e
+			defaultHierarchy: LocalDateTable_7d533e57-d5ab-4075-82ab-218180ee70ef.'Date Hierarchy'
 
 		annotation SummarizationSetBy = Automatic
 
 		annotation UnderlyingDateTimeDataType = Date
 
-	column FiscalYear
-		dataType: int64
-		formatString: 0
-		lineageTag: 18988b74-acae-429c-befb-09da18b5f259
-		summarizeBy: sum
-		sourceColumn: FiscalYear
+	column Department
+		dataType: string
+		lineageTag: b35935a7-d1d3-4cf2-8070-564c201c9bc3
+		summarizeBy: none
+		sourceColumn: Department
 
 		annotation SummarizationSetBy = Automatic
 
-	column BudgetAmount
-		dataType: int64
-		formatString: 0
-		lineageTag: 56e20338-d3c2-4b4a-8cd9-28b2492a6b5e
-		summarizeBy: sum
-		sourceColumn: BudgetAmount
+	column CostCenter
+		dataType: string
+		lineageTag: 0234c9a7-2fec-4194-b20c-adf7a0f3e3b4
+		summarizeBy: none
+		sourceColumn: CostCenter
 
 		annotation SummarizationSetBy = Automatic
+
+	column Project
+		dataType: string
+		lineageTag: cfc5b7ec-a03c-42cc-8a0a-6dfd43fa9fda
+		summarizeBy: none
+		sourceColumn: Project
+
+		annotation SummarizationSetBy = Automatic
+
+	column Category
+		dataType: string
+		lineageTag: 10f67b14-5658-4174-9d16-d9b61d0850a4
+		summarizeBy: none
+		sourceColumn: Category
+
+		annotation SummarizationSetBy = Automatic
+
+	column Amount_USD
+		dataType: double
+		lineageTag: 79b61b34-f47d-4624-b0ac-84f30341079b
+		summarizeBy: sum
+		sourceColumn: Amount_USD
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	partition Budget = m
 		mode: import
 		source =
 				let
-				    Source = Excel.Workbook(File.Contents(Environment.GetEnvironmentVariable("USERPROFILE") & "\OneDrive\Documents\Shared Documents\Finance-DEV\Budget\Budget_DEV.xlsx"), null, true),
-				    Budget_Sheet = Source{[Item="Budget",Kind="Sheet"]}[Data],
-				    #"Promoted Headers" = Table.PromoteHeaders(Budget_Sheet, [PromoteAllScalars=true]),
-				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Department", type text}, {"Account", type text}, {"Month", type date}, {"FiscalYear", Int64.Type}, {"BudgetAmount", Int64.Type}})
+				    Source = Sql.Databases("sales-pbi-db.database.windows.net"),
+				    #"free-sql-db-5932339" = Source{[Name="free-sql-db-5932339"]}[Data],
+				    dbo_Budget = #"free-sql-db-5932339"{[Schema="dbo",Item="Budget"]}[Data]
 				in
-				    #"Changed Type"
+				    dbo_Budget
 
 	annotation PBI_NavigationStepName = Navigation
 
