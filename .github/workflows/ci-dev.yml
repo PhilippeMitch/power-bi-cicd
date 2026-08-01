@@ -45,4 +45,4 @@ jobs:
       - name: Run Secret Scanning Review Action
         uses: advanced-security/secret-scanning-review-action@v2
         with:
-          GITHUB_TOKEN: ${{ secrets.SCAN_GITHUB_TOKEN }}
+          token: ${{ secrets.SCAN_GITHUB_TOKEN }}
