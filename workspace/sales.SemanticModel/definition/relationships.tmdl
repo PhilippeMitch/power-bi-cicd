@@ -1,10 +1,13 @@
-relationship 9d324128-6950-43f5-a8a7-60390a6f8b32
-	joinOnDateBehavior: datePartOnly
+relationship 2e023728-57b6-6c15-c44f-302327307e42
 	fromColumn: Actuals.Month
-	toColumn: LocalDateTable_1bc9d289-57f5-4ced-aa5f-b2349cfaf1ed.Date
+	toColumn: DimMonth.YearMonth
 
-relationship 6a454c35-1e1d-497a-9060-4592bd97415e
-	joinOnDateBehavior: datePartOnly
+relationship b8d47e9b-083a-2715-7c43-f5d9e510427d
 	fromColumn: Budget.Month
-	toColumn: LocalDateTable_7d533e57-d5ab-4075-82ab-218180ee70ef.Date
+	toColumn: DimMonth.YearMonth
+
+relationship 724b1e4e-9bd8-4eff-b10a-d0d3c4d4da58
+	joinOnDateBehavior: datePartOnly
+	fromColumn: DimMonth.YearMonth
+	toColumn: LocalDateTable_64daa692-264f-4be5-8049-fbe3e5cbb388.Date
 

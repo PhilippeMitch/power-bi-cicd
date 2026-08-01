@@ -1,0 +1,98 @@
+table _Measures
+	lineageTag: e10d4e3a-cd52-4c49-a585-8d253225d6e8
+
+	measure BudgetAttainment% =
+			
+			DIVIDE(
+			    [TotalActual],
+			    [TotalBudget],
+			    0
+			)
+		lineageTag: c3adb8d6-ee10-4be3-a891-f258b05f58c6
+
+	measure TotalActual = SUM(Actuals[Amount_USD])
+		lineageTag: 6de384bf-c3c0-40ee-b0d4-c84c269c40d4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure TotalBudget = SUM (Budget[Amount_USD])
+		lineageTag: c9786d21-05dd-4442-8a26-2fd4dc733268
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure BudgetRemaining = [TotalBudget] - [TotalActual]
+		lineageTag: 78e241b5-b253-4747-85b1-6b19c93971e8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Variance$ = ```
+			[TotalActual] - [TotalBudget] 
+			```
+		lineageTag: 46a79487-bf1e-43df-b0b7-fbc5aa9bfb16
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Variance% =
+			
+			DIVIDE(
+			    [Variance$],
+			    [TotalBudget],
+			    0
+			)
+		lineageTag: 2f62cd2f-1ff5-41ae-a992-f70a55f08047
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure ProjectActual = SUM(Actuals[Amount_USD])
+		lineageTag: a7ff28b0-0809-4d79-859b-6217379fa45c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure BudgetStatus =
+			
+			SWITCH(
+			    TRUE(),
+			    [Variance%] <= -0.05, "Under Budget",
+			    [Variance%] <= 0.05, "On Track",
+			    "Over Budget"
+			)
+		lineageTag: a1be82e0-2288-4e57-a614-2ac8a29a87f1
+
+	measure DepartmentRank =
+			
+			RANKX(
+			    ALL(Actuals[Department]),
+			    [TotalActual],
+			    ,
+			    DESC
+			)
+		formatString: 0
+		lineageTag: 96f918f8-d405-484b-a088-017891f22acd
+
+	measure DepartmentSpend% =
+			
+			DIVIDE(
+			    [TotalActual],
+			    CALCULATE(
+			        [TotalActual],
+			        ALL(Actuals[Department])
+			    )
+			)
+		lineageTag: 0d7bba66-d51c-401b-8b36-bbc9986d2715
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column Description
+		lineageTag: 342bfbb6-2b1d-4eb4-ba2c-111bf4223933
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Description]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = calculated
+		mode: import
+		source = DATATABLE("Description", STRING, { {"Grouping Measures"} } )
+
+	annotation PBI_Id = 790574f11b444bf2b8939e8f4e36f8bd
+

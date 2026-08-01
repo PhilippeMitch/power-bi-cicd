@@ -1,0 +1,24 @@
+table DimDepartment
+	lineageTag: 9e0b5d81-a84f-4c57-82e6-0944b08bbcf0
+
+	column Department
+		lineageTag: c9d044bd-f356-4549-959b-e6201b5068fa
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Department]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DimDepartment = calculated
+		mode: import
+		source =
+				
+				DISTINCT(
+				    UNION(
+				        SELECTCOLUMNS(Budget, "Department", Budget[Department]),
+				        SELECTCOLUMNS(Actuals, "Department", Actuals[Department])
+				    )
+				)
+
+	annotation PBI_Id = d2d0c4fdea8b4080bd42ad41a0fe2a01
+
